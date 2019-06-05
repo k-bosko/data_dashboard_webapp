@@ -69,7 +69,6 @@ def return_figures():
     #TODO: make it dynamic - e.g. insert year now or previous year
     df_one = df_one[df_one['date'] == '2017']
     df_one.sort_values('value', ascending=False, inplace=True)
-    print(df_one)
 
     graph_one.append(
         go.Bar(
