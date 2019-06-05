@@ -1,4 +1,5 @@
 import pandas as pd
+import plotly.graph_objs as go
 from collections import OrderedDict, defaultdict
 import requests
 
@@ -37,21 +38,56 @@ def pull_data(countries=country_default, indicators=indicators_default):
         except:
             print('could not load data', indicator)
 
-        data = defaultdict(list)
+        data = r.json()[1]
 
-        for entry in r.json()[1]:
-        #check if country is already in dictionary
-        # if so, append the new x and y values to the lists 
-            if data[entry['country']['value']]:
-                data[entry['country']['value']][0].append(int(entry['date']))
-                data[entry['country']['value']][1].append(float(entry['value']))
-            else:
-                data[entry['country']['value']] = [[],[]]
-        
+        for value in data:
+            value['indicator'] = value['indicator']['value']
+            value['country'] = value['country']['value']
+
         data_frames.append(data)
+
         return data_frames
 
-df = pull_data()
-print(df)
+def return_figures():
+    ''' Creates plotly viz using World Bank API
+    Input:
+        none
+    Output:
+        list (dict): list containing the plotly viz
+    '''
+    data_frames = pull_data()
 
-     
+    #first graph GDP in 2017 in selected countries as a bar chart
+    graph_one = []
+    df_one = pd.DataFrame(data_frames[0])    
+
+    #country list of unique values to ensure legend have the same order and color
+    #TODO: rewrite as ordered object in pandas
+    #countrylist = df_one.country.unique().tolist()
+
+    #filter values for the viz
+    #TODO: make it dynamic - e.g. insert year now or previous year
+    df_one = df_one[df_one['date'] == '2017']
+    df_one.sort_values('value', ascending=False, inplace=True)
+    print(df_one)
+
+    graph_one.append(
+        go.Bar(
+            x = df_one.country.tolist(),
+            y = df_one.value.tolist()
+            )
+        )
+
+    layout_one = dict(
+        title = "GDP growth in 2017, annual %",
+        xaxis = dict(title = 'Country'),
+        yaxis = dict(title = 'annual %')
+    ) 
+
+    #append all charts
+    figures = []
+    figures.append(dict(data=graph_one, layout=layout_one))
+
+    return figures 
+
+return_figures()
